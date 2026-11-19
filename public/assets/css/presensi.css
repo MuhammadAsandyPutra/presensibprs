@@ -1,0 +1,69 @@
+/* Tema aplikasi presensi (hijau-emas) di atas Mobilekit. Semua kustomisasi karyawan ada di sini. */
+:root {
+    --hijau: #174d37;
+    --hijau-tua: #103b2a;
+    --hijau-muda: #eaf2ed;
+    --emas: #c6a15b;
+    --teks: #1e293b;
+    --redam: #84918a;
+    --garis: #e5ebe7;
+}
+body { background: #f2f5f3; color: var(--teks); }
+.bg-primary, .appHeader.bg-primary { background: var(--hijau) !important; }
+.btn-primary { background: var(--hijau); border-color: var(--hijau); }
+.btn-primary:hover, .btn-primary:focus { background: var(--hijau-tua); border-color: var(--hijau-tua); }
+.text-primary { color: var(--hijau) !important; }
+.appBottomMenu .item.active .col, .appBottomMenu .item.active strong, .appBottomMenu .item.active ion-icon { color: var(--hijau) !important; }
+.appBottomMenu .action-button.large { background: var(--hijau) !important; }
+#appCapsule { padding-top: 56px; padding-bottom: 80px; }
+#appCapsule.tanpa-header { padding-top: 0; }
+
+/* Kepala beranda */
+.kepala-beranda { background: linear-gradient(135deg, var(--hijau-tua), var(--hijau)); color: #fff; padding: 22px 20px 64px; border-radius: 0 0 26px 26px; position: relative; }
+.kepala-beranda .sapaan { font-size: 13px; opacity: .8; }
+.kepala-beranda .nama { font-size: 20px; font-weight: 700; line-height: 1.2; }
+.kepala-beranda .meta { font-size: 12px; opacity: .8; }
+.kepala-beranda .keluar { position: absolute; top: 18px; right: 18px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3); color: #fff; font-size: 20px; display: flex; align-items: center; justify-content: center; }
+.kartu-hari { margin: -46px 16px 0; background: #fff; border-radius: 18px; padding: 16px; box-shadow: 0 6px 20px rgba(16,59,42,.12); }
+.kartu-hari .jam { font-size: 13px; color: var(--redam); }
+.kartu-hari .waktu { font-size: 22px; font-weight: 700; }
+.kartu-hari .garis { border-top: 1px dashed var(--garis); margin: 12px 0; }
+.status-chip { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+.chip-hijau { background: #dff3e6; color: #1b7a43; }
+.chip-oranye { background: #fdecd2; color: #b3660d; }
+.chip-merah { background: #fbe0dc; color: #b3261e; }
+.chip-biru { background: #dce9fb; color: #1d5fb4; }
+.chip-abu { background: #e8ecea; color: #5b6862; }
+.grid-ringkas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 16px 0; }
+.grid-ringkas .sel { background: #fff; border-radius: 14px; padding: 10px 4px; text-align: center; border: 1px solid var(--garis); }
+.grid-ringkas .angka { font-size: 20px; font-weight: 700; line-height: 1.1; }
+.grid-ringkas .label { font-size: 11px; color: var(--redam); }
+.judul-bagian { font-size: 14px; font-weight: 700; margin: 18px 16px 8px; display: flex; justify-content: space-between; align-items: center; }
+.judul-bagian a { font-size: 12px; font-weight: 500; }
+.baris-riwayat { background: #fff; margin: 0 16px 8px; border-radius: 14px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--garis); }
+.baris-riwayat .tgl { font-weight: 600; font-size: 14px; }
+.baris-riwayat .jam { font-size: 12px; color: var(--redam); }
+.kartu { background: #fff; border: 1px solid var(--garis); border-radius: 16px; padding: 16px; margin: 12px 16px; }
+.form-mobile label { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.form-mobile .form-control { border-radius: 10px; }
+.kosong { text-align: center; color: var(--redam); padding: 28px 16px; font-size: 14px; }
+
+/* Halaman presensi */
+.video-selfie { position: relative; background: #0b1f16; border-radius: 16px; overflow: hidden; aspect-ratio: 3 / 4; max-height: 52vh; width: 100%; }
+.video-selfie video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+.video-selfie .info { position: absolute; left: 10px; top: 10px; background: rgba(0,0,0,.5); color: #fff; border-radius: 10px; padding: 6px 10px; font-size: 12px; line-height: 1.4; }
+#peta { height: 170px; border-radius: 14px; margin-top: 10px; }
+.status-gps { border-radius: 12px; padding: 10px 12px; font-size: 13px; margin-top: 10px; display: flex; gap: 8px; align-items: center; }
+.status-gps.cari { background: #fff7e1; color: #7a5a00; }
+.status-gps.ok { background: #dff3e6; color: #1b7a43; }
+.status-gps.salah { background: #fbe0dc; color: #b3261e; }
+
+/* Warna chip mengikuti nama warna pada enum (StatusHarian/JenisPengajuan/StatusPengajuan::warna()) */
+.chip-success { background: #dff3e6; color: #1b7a43; }
+.chip-orange, .chip-warning { background: #fdecd2; color: #b3660d; }
+.chip-danger { background: #fbe0dc; color: #b3261e; }
+.chip-info, .chip-primary { background: #dce9fb; color: #1d5fb4; }
+.chip-secondary, .chip-lime { background: #e8ecea; color: #5b6862; }
+.tombol-hijau { display: block; width: 100%; text-align: center; background: var(--hijau); color: #fff !important; border-radius: 12px; padding: 12px; font-weight: 600; }
+.tombol-hijau.merah { background: #b3261e; }
+.fab-baru { position: fixed; right: 18px; bottom: 90px; background: var(--emas); color: #1b1b1b; width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 6px 16px rgba(0,0,0,.2); z-index: 20; }
