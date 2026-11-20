@@ -63,13 +63,20 @@ class BerkasController extends Controller
      * Content-Type ditetapkan dari ekstensi (tidak bergantung deteksi MIME server) dan
      * kegagalan dicatat di storage/logs/laravel.log agar mudah ditelusuri.
      */
-    private function kirim(?string $nilai, ?string $folderLama = null): StreamedResponse
+
+    private function kirim(?string $nilai, ?string $folderLama = null)
     {
         $nilai = ltrim((string) $nilai, '/');
+
         abort_if($nilai === '' || str_contains($nilai, '..'), 404);
 
-        $privat = config('presensi.foto.disk');
-        $kandidat = [[$privat, $nilai], ['public', $nilai]];
+        $privat = config('presensi.foto.disk', 'private');
+
+        $kandidat = [
+            [$privat, $nilai],
+            ['public', $nilai],
+        ];
+
         if ($folderLama) {
             $kandidat[] = ['public', $folderLama . '/' . $nilai];
             $kandidat[] = [$privat, $folderLama . '/' . $nilai];
@@ -77,17 +84,25 @@ class BerkasController extends Controller
 
         foreach ($kandidat as [$namaDisk, $path]) {
             $disk = Storage::disk($namaDisk);
+
             if ($disk->exists($path)) {
+                $lokasiFile = $disk->path($path);
+
                 $tipe = self::TIPE[strtolower(pathinfo($path, PATHINFO_EXTENSION))] ?? 'application/octet-stream';
 
-                return $disk->response($path, null, [
+                return response()->file($lokasiFile, [
                     'Content-Type' => $tipe,
-                    'Cache-Control' => 'private, max-age=300',
+                    'Cache-Control' => 'private, no-cache, no-store, must-revalidate',
+                    'X-Content-Type-Options' => 'nosniff',
                 ]);
             }
         }
 
-        Log::warning('Berkas tidak ditemukan', ['nilai_database' => $nilai, 'dicoba' => $kandidat]);
+        Log::warning('Berkas tidak ditemukan', [
+            'nilai_database' => $nilai,
+            'dicoba' => $kandidat,
+        ]);
+
         abort(404);
     }
 }
