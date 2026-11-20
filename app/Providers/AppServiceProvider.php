@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -17,9 +18,14 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrapFive();
 
+        // Di produksi semua URL (route, asset, foto) dibuat https agar tidak diblokir sebagai mixed content.
+        if (config('app.env') === 'production') {
+            URL::forceScheme('https');
+        }
+
         // Batasi percobaan login: 5x per menit per (IP + NIK/email).
-        RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)
-            ->by($request->ip().'|'.strtolower((string) ($request->input('nik') ?? $request->input('email')))));
+        RateLimiter::for('login', fn(Request $request) => Limit::perMinute(5)
+            ->by($request->ip() . '|' . strtolower((string) ($request->input('nik') ?? $request->input('email')))));
 
         // Lencana jumlah pengajuan menunggu pada menu sidebar panel.
         View::composer('layouts.admin', function ($view) {

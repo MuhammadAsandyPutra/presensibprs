@@ -6,6 +6,7 @@ use App\Models\Karyawan;
 use App\Models\PengajuanIzin;
 use App\Models\Presensi;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -15,6 +16,15 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class BerkasController extends Controller
 {
+    private const TIPE = [
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp',
+        'pdf' => 'application/pdf',
+    ];
+
     public function presensi(Presensi $presensi, string $jenis): StreamedResponse
     {
         $this->izinkan($presensi->nik);
@@ -44,19 +54,14 @@ class BerkasController extends Controller
         abort_unless(Auth::guard('user')->check() || $pemilikSendiri, 403);
     }
 
-    // private function kirim(?string $path): StreamedResponse
-    // {
-    //     $disk = Storage::disk(config('presensi.foto.disk'));
-    //     abort_if(! $path || ! $disk->exists($path), 404);
-
-    //     return $disk->response($path, null, ['Cache-Control' => 'private, max-age=300']);
-    // }
-
     /**
      * Cari berkas di beberapa lokasi agar data LAMA tetap tampil:
      *  1. disk privat : storage/app/private/<nilai kolom>
      *  2. disk public : storage/app/public/<nilai kolom>
      *  3. folder lama : storage/app/public/uploads/karyawan|absensi/<nama file>
+     *
+     * Content-Type ditetapkan dari ekstensi (tidak bergantung deteksi MIME server) dan
+     * kegagalan dicatat di storage/logs/laravel.log agar mudah ditelusuri.
      */
     private function kirim(?string $nilai, ?string $folderLama = null): StreamedResponse
     {
@@ -73,10 +78,16 @@ class BerkasController extends Controller
         foreach ($kandidat as [$namaDisk, $path]) {
             $disk = Storage::disk($namaDisk);
             if ($disk->exists($path)) {
-                return $disk->response($path, null, ['Cache-Control' => 'private, max-age=300']);
+                $tipe = self::TIPE[strtolower(pathinfo($path, PATHINFO_EXTENSION))] ?? 'application/octet-stream';
+
+                return $disk->response($path, null, [
+                    'Content-Type' => $tipe,
+                    'Cache-Control' => 'private, max-age=300',
+                ]);
             }
         }
 
+        Log::warning('Berkas tidak ditemukan', ['nilai_database' => $nilai, 'dicoba' => $kandidat]);
         abort(404);
     }
 }

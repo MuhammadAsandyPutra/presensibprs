@@ -23,7 +23,7 @@ return [
     ],
 
     'foto' => [
-        'disk'          => 'local', // disk PRIVAT (storage/app/private); jangan pakai disk 'public'
+        'disk'          => 'private', // disk PRIVAT (storage/app/private); jangan pakai disk 'public'
         'maks_kb'       => 1500,
         'retensi_bulan' => 12,      // foto presensi lebih tua dari ini dihapus oleh presensi:bersihkan-foto
     ],
