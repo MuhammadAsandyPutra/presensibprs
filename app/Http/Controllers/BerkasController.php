@@ -19,14 +19,14 @@ class BerkasController extends Controller
     {
         $this->izinkan($presensi->nik);
 
-        return $this->kirim($jenis === 'in' ? $presensi->foto_in : $presensi->foto_out);
+        return $this->kirim($jenis === 'in' ? $presensi->foto_in : $presensi->foto_out, 'uploads/absensi');
     }
 
     public function profil(Karyawan $karyawan): StreamedResponse
     {
         $this->izinkan($karyawan->nik);
 
-        return $this->kirim($karyawan->foto);
+        return $this->kirim($karyawan->foto, 'uploads/karyawan');
     }
 
     public function lampiran(PengajuanIzin $pengajuan): StreamedResponse
@@ -44,11 +44,39 @@ class BerkasController extends Controller
         abort_unless(Auth::guard('user')->check() || $pemilikSendiri, 403);
     }
 
-    private function kirim(?string $path): StreamedResponse
-    {
-        $disk = Storage::disk(config('presensi.foto.disk'));
-        abort_if(! $path || ! $disk->exists($path), 404);
+    // private function kirim(?string $path): StreamedResponse
+    // {
+    //     $disk = Storage::disk(config('presensi.foto.disk'));
+    //     abort_if(! $path || ! $disk->exists($path), 404);
 
-        return $disk->response($path, null, ['Cache-Control' => 'private, max-age=300']);
+    //     return $disk->response($path, null, ['Cache-Control' => 'private, max-age=300']);
+    // }
+
+    /**
+     * Cari berkas di beberapa lokasi agar data LAMA tetap tampil:
+     *  1. disk privat : storage/app/private/<nilai kolom>
+     *  2. disk public : storage/app/public/<nilai kolom>
+     *  3. folder lama : storage/app/public/uploads/karyawan|absensi/<nama file>
+     */
+    private function kirim(?string $nilai, ?string $folderLama = null): StreamedResponse
+    {
+        $nilai = ltrim((string) $nilai, '/');
+        abort_if($nilai === '' || str_contains($nilai, '..'), 404);
+
+        $privat = config('presensi.foto.disk');
+        $kandidat = [[$privat, $nilai], ['public', $nilai]];
+        if ($folderLama) {
+            $kandidat[] = ['public', $folderLama . '/' . $nilai];
+            $kandidat[] = [$privat, $folderLama . '/' . $nilai];
+        }
+
+        foreach ($kandidat as [$namaDisk, $path]) {
+            $disk = Storage::disk($namaDisk);
+            if ($disk->exists($path)) {
+                return $disk->response($path, null, ['Cache-Control' => 'private, max-age=300']);
+            }
+        }
+
+        abort(404);
     }
 }
