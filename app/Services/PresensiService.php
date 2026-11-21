@@ -10,6 +10,7 @@ use App\Models\Presensi;
 use App\Support\Geo;
 use App\Support\Waktu;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -46,7 +47,7 @@ class PresensiService
         $maksAkurasi = (float) Pengaturan::ambil('gps.akurasi_maks');
         if ($akurasi !== null && $akurasi > $maksAkurasi) {
             throw new AturanBisnisException(
-                'Akurasi GPS rendah ('.round($akurasi).' m). Pindah ke area terbuka lalu coba lagi.',
+                'Akurasi GPS rendah (' . round($akurasi) . ' m). Pindah ke area terbuka lalu coba lagi.',
                 'akurasi'
             );
         }
@@ -68,10 +69,10 @@ class PresensiService
 
         if ($presensi === null) {
             if (Waktu::detik($jam) < Waktu::detik($jamKerja->awal_jam_masuk)) {
-                throw new AturanBisnisException('Belum waktunya presensi masuk (mulai '.Waktu::hm($jamKerja->awal_jam_masuk).').', 'waktu');
+                throw new AturanBisnisException('Belum waktunya presensi masuk (mulai ' . Waktu::hm($jamKerja->awal_jam_masuk) . ').', 'waktu');
             }
             if (Waktu::detik($jam) > Waktu::detik($jamKerja->akhir_jam_masuk)) {
-                throw new AturanBisnisException('Waktu presensi masuk sudah ditutup (batas '.Waktu::hm($jamKerja->akhir_jam_masuk).'). Hubungi HR.', 'waktu');
+                throw new AturanBisnisException('Waktu presensi masuk sudah ditutup (batas ' . Waktu::hm($jamKerja->akhir_jam_masuk) . '). Hubungi HR.', 'waktu');
             }
 
             $foto = $this->simpanFoto($karyawan, $tanggal, 'in', $fotoDataUrl);
@@ -108,7 +109,7 @@ class PresensiService
 
         if ($presensi->jam_out === null) {
             if (Waktu::detik($jam) < Waktu::detik($jamKerja->jam_pulang)) {
-                throw new AturanBisnisException('Belum waktunya pulang (jam pulang '.Waktu::hm($jamKerja->jam_pulang).').', 'waktu');
+                throw new AturanBisnisException('Belum waktunya pulang (jam pulang ' . Waktu::hm($jamKerja->jam_pulang) . ').', 'waktu');
             }
 
             $foto = $this->simpanFoto($karyawan, $tanggal, 'out', $fotoDataUrl);
@@ -135,7 +136,7 @@ class PresensiService
 
         if ($pengajuan) {
             throw new AturanBisnisException(
-                'Anda memiliki '.strtolower($pengajuan->jenis()->label()).' yang disetujui pada hari ini, presensi tidak diperlukan.',
+                'Anda memiliki ' . strtolower($pengajuan->jenis()->label()) . ' yang disetujui pada hari ini, presensi tidak diperlukan.',
                 'izin'
             );
         }
@@ -154,7 +155,7 @@ class PresensiService
         $terakhir = Presensi::query()->where('nik', $karyawan->nik)
             ->orderByDesc('tanggal_presensi')->limit(3)->pluck('lokasi_in');
 
-        return $terakhir->count() === 3 && $terakhir->every(fn ($l) => $l === $lokasi);
+        return $terakhir->count() === 3 && $terakhir->every(fn($l) => $l === $lokasi);
     }
 
     /** Validasi & simpan foto (data URL base64) ke disk PRIVAT; mengembalikan path relatif. */
@@ -177,10 +178,13 @@ class PresensiService
 
         $ekstensi = $cocok[1] === 'png' ? 'png' : 'jpg';
         $nik = preg_replace('/[^A-Za-z0-9_-]/', '_', $karyawan->nik);
-        $path = 'presensi/'.substr($tanggal, 0, 4).'/'.substr($tanggal, 5, 2)
-            .'/'.$nik.'_'.str_replace('-', '', $tanggal).'_'.$jenis.'.'.$ekstensi;
+        $path = 'presensi/' . substr($tanggal, 0, 4) . '/' . substr($tanggal, 5, 2)
+            . '/' . $nik . '_' . str_replace('-', '', $tanggal) . '_' . $jenis . '.' . $ekstensi;
 
-        Storage::disk(config('presensi.foto.disk'))->put($path, $biner);
+        if (! Storage::disk(config('presensi.foto.disk'))->put($path, $biner)) {
+            Log::error('Gagal menyimpan foto presensi', ['path' => $path]);
+            throw new AturanBisnisException('Foto gagal disimpan di server. Hubungi admin.', 'foto');
+        }
 
         return $path;
     }

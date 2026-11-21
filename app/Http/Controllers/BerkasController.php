@@ -8,7 +8,7 @@ use App\Models\Presensi;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * Menyajikan berkas PRIVAT (foto wajah, lampiran). Berkas tidak pernah bisa dibuka lewat URL
@@ -25,21 +25,21 @@ class BerkasController extends Controller
         'pdf' => 'application/pdf',
     ];
 
-    public function presensi(Presensi $presensi, string $jenis): StreamedResponse
+    public function presensi(Presensi $presensi, string $jenis): BinaryFileResponse
     {
         $this->izinkan($presensi->nik);
 
         return $this->kirim($jenis === 'in' ? $presensi->foto_in : $presensi->foto_out, 'uploads/absensi');
     }
 
-    public function profil(Karyawan $karyawan): StreamedResponse
+    public function profil(Karyawan $karyawan): BinaryFileResponse
     {
         $this->izinkan($karyawan->nik);
 
         return $this->kirim($karyawan->foto, 'uploads/karyawan');
     }
 
-    public function lampiran(PengajuanIzin $pengajuan): StreamedResponse
+    public function lampiran(PengajuanIzin $pengajuan): BinaryFileResponse
     {
         $this->izinkan($pengajuan->nik);
 
@@ -60,12 +60,13 @@ class BerkasController extends Controller
      *  2. disk public : storage/app/public/<nilai kolom>
      *  3. folder lama : storage/app/public/uploads/karyawan|absensi/<nama file>
      *
-     * Content-Type ditetapkan dari ekstensi (tidak bergantung deteksi MIME server) dan
-     * kegagalan dicatat di storage/logs/laravel.log agar mudah ditelusuri.
+     * Berkas dikirim lewat BinaryFileResponse (bukan stream Flysystem): lebih andal di shared
+     * hosting (LiteSpeed/Apache), mendukung ETag/304 & Range, dan tidak bergantung ekstensi fileinfo.
+     * Kegagalan dicatat di storage/logs/laravel.log.
      */
-    private function kirim(?string $nilai, ?string $folderLama = null): StreamedResponse
+    private function kirim(?string $nilai, ?string $folderLama = null): BinaryFileResponse
     {
-        $nilai = ltrim((string) $nilai, '/');
+        $nilai = ltrim(str_replace('\\', '/', (string) $nilai), '/');
         abort_if($nilai === '' || str_contains($nilai, '..'), 404);
 
         $privat = config('presensi.foto.disk');
@@ -77,14 +78,31 @@ class BerkasController extends Controller
 
         foreach ($kandidat as [$namaDisk, $path]) {
             $disk = Storage::disk($namaDisk);
-            if ($disk->exists($path)) {
-                $tipe = self::TIPE[strtolower(pathinfo($path, PATHINFO_EXTENSION))] ?? 'application/octet-stream';
-
-                return $disk->response($path, null, [
-                    'Content-Type' => $tipe,
-                    'Cache-Control' => 'private, max-age=300',
-                ]);
+            if (! $disk->exists($path)) {
+                continue;
             }
+
+            $penuh = $disk->path($path);
+            if (! is_file($penuh) || ! is_readable($penuh)) {
+                Log::error('Berkas ada tetapi tidak bisa dibaca (periksa izin folder)', ['path' => $penuh]);
+                continue;
+            }
+
+            $tipe = self::TIPE[strtolower(pathinfo($path, PATHINFO_EXTENSION))] ?? 'application/octet-stream';
+
+            // Bersihkan buffer agar tidak ada spasi/warning PHP yang ikut merusak biner gambar.
+            while (! app()->runningUnitTests() && ob_get_level() > 0) {
+                @ob_end_clean();
+            }
+
+            $respons = response()->file($penuh, [
+                'Content-Type' => $tipe,
+                'Cache-Control' => 'private, max-age=300',
+                'X-Content-Type-Options' => 'nosniff',
+            ]);
+            $respons->setAutoEtag();
+
+            return $respons;
         }
 
         Log::warning('Berkas tidak ditemukan', ['nilai_database' => $nilai, 'dicoba' => $kandidat]);

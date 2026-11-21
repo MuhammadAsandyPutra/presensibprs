@@ -42,7 +42,10 @@ return [
             'driver' => 'local',
             'root' => storage_path('app/private'),
             'visibility' => 'private',
-            'throw' => false,
+            'permissions' => ['file' => ['private' => 0644, 'public' => 0644], 'dir' => ['private' => 0755, 'public' => 0755]],
+            // true: gagal menulis (izin folder salah, disk penuh) langsung error & tercatat,
+            // bukan diam-diam menyimpan nama berkas ke database tanpa berkasnya.
+            'throw' => true,
             'report' => false,
         ],
 

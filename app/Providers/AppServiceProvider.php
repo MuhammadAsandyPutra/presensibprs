@@ -19,7 +19,7 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrapFive();
 
         // Di produksi semua URL (route, asset, foto) dibuat https agar tidak diblokir sebagai mixed content.
-        if (config('app.env') === 'production') {
+        if (config('app.env') === 'production' || str_starts_with((string) config('app.url'), 'https://')) {
             URL::forceScheme('https');
         }
 

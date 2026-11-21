@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="id">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover">
@@ -13,24 +14,27 @@
     <link rel="stylesheet" href="{{ asset('assets/css/presensi.css') }}">
     @stack('head')
 </head>
+
 <body>
-    <div id="loader"><div class="spinner-border text-primary" role="status"></div></div>
+    <div id="loader">
+        <div class="spinner-border text-primary" role="status"></div>
+    </div>
 
     @php $adaHeader = trim($__env->yieldContent('header')) !== ''; @endphp
 
     @if ($adaHeader)
-        <div class="appHeader bg-primary text-light">
-            <div class="left">
-                <a href="javascript:;" class="headerButton goBack"><ion-icon name="chevron-back-outline"></ion-icon></a>
-            </div>
-            <div class="pageTitle">@yield('header')</div>
-            <div class="right">@yield('header-kanan')</div>
+    <div class="appHeader bg-primary text-light">
+        <div class="left">
+            <a href="javascript:;" class="headerButton goBack"><ion-icon name="chevron-back-outline"></ion-icon></a>
         </div>
+        <div class="pageTitle">@yield('header')</div>
+        <div class="right">@yield('header-kanan')</div>
+    </div>
     @endif
 
     <div id="appCapsule" class="{{ $adaHeader ? '' : 'tanpa-header' }}">
         @if (session('sukses') || session('galat') || $errors->any())
-            <div class="px-3 pt-3">@include('partials.flash')</div>
+        <div class="px-3 pt-3">@include('partials.flash')</div>
         @endif
         @yield('content')
     </div>
@@ -46,5 +50,16 @@
     <script src="{{ asset('assets/js/base.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @stack('scripts')
+    <script>
+        // Foto privat yang gagal dimuat diganti placeholder (alt text tidak lagi tampil sendirian).
+        document.addEventListener('error', function(e) {
+            var el = e.target;
+            if (el.tagName === 'IMG' && el.src.indexOf('/berkas/') !== -1 && !el.dataset.gagal) {
+                el.dataset.gagal = '1';
+                el.src = "{{ asset('assets/img/no_photo.png') }}";
+            }
+        }, true);
+    </script>
 </body>
+
 </html>
