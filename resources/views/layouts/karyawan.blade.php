@@ -8,8 +8,7 @@
     <meta name="theme-color" content="#174D37">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>@yield('judul', 'E-Presensi') | {{ config('app.name') }}</title>
-    <link rel="icon" type="image/png" href="{{ asset('assets/img/favicon.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('assets/img/icon/192x192.png') }}">
+    @include('partials.ikon')
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/presensi.css') }}">
     @stack('head')
