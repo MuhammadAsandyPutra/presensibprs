@@ -20,7 +20,7 @@ class PresensiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Storage::fake('local');
+        Storage::fake(config('presensi.foto.disk'));
         $this->siapkanMaster();
     }
 
@@ -40,7 +40,7 @@ class PresensiTest extends TestCase
         $p = Presensi::query()->where('nik', '1001')->firstOrFail();
         $this->assertSame('09:12:00', $p->jam_in);
         $this->assertNotNull($p->foto_in);
-        Storage::disk('local')->assertExists($p->foto_in);
+        Storage::disk(config('presensi.foto.disk'))->assertExists($p->foto_in);
     }
 
     public function test_presensi_di_luar_radius_ditolak(): void
