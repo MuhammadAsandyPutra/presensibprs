@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="kartu text-center" style="margin-top:12px">
-    <img src="{{ $karyawan->foto ? route('berkas.profil', $karyawan) : asset('assets/img/no_photo.png') }}" alt="Foto" class="rounded-circle" width="88" height="88" style="object-fit:cover">
+    <img src="{{ $karyawan->foto ? route('berkas.profil', ['karyawan' => $karyawan, 'v' => substr(md5($karyawan->foto), 0, 8)]) : asset('assets/img/no_photo.png') }}" alt="Foto" class="rounded-circle" width="88" height="88" style="object-fit:cover">
     <div style="font-size:18px;font-weight:700;margin-top:8px">{{ $karyawan->nama_lengkap }}</div>
     <div style="font-size:13px;color:var(--redam)">NIK {{ $karyawan->nik }} · {{ $karyawan->jabatan }}</div>
     <div style="font-size:13px;color:var(--redam)">{{ $karyawan->departemen?->nama_dept }} · {{ $karyawan->cabang?->nama_cabang }}</div>
